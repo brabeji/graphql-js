@@ -43,7 +43,22 @@ describe('Star Wars Introspection Tests', () => {
               name: 'Human',
             },
             {
+              name: 'HumanRank',
+            },
+            {
+              name: 'HumanRankObject',
+            },
+            {
               name: 'Droid',
+            },
+            {
+              name: 'DroidRank',
+            },
+            {
+              name: 'DroidRankObject',
+            },
+            {
+              name: 'CharacterUnion',
             },
             {
               name: '__Schema',
@@ -203,6 +218,20 @@ describe('Star Wars Introspection Tests', () => {
               },
             },
             {
+              name: 'rank',
+              type: {
+                name: 'DroidRank',
+                kind: 'ENUM',
+              },
+            },
+            {
+              name: 'rankObject',
+              type: {
+                name: 'DroidRankObject',
+                kind: 'OBJECT',
+              },
+            },
+            {
               name: 'secretBackstory',
               type: {
                 name: 'String',
@@ -286,6 +315,22 @@ describe('Star Wars Introspection Tests', () => {
                   name: 'Episode',
                   kind: 'ENUM',
                 },
+              },
+            },
+            {
+              name: 'rank',
+              type: {
+                name: 'DroidRank',
+                kind: 'ENUM',
+                ofType: null,
+              },
+            },
+            {
+              name: 'rankObject',
+              type: {
+                name: 'DroidRankObject',
+                kind: 'OBJECT',
+                ofType: null,
               },
             },
             {
@@ -393,6 +438,10 @@ describe('Star Wars Introspection Tests', () => {
                     defaultValue: null,
                   },
                 ],
+              },
+              {
+                name: 'characters',
+                args: [],
               },
             ],
           },

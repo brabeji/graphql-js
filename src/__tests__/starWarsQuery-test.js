@@ -497,5 +497,63 @@ describe('Star Wars Query Tests', () => {
         ],
       });
     });
+
+    it('Correctly reports error on conflicting "rank" fields', async () => {
+      const query = `
+        query CharactersQuery {
+          characters {
+            ... on Character {
+              name
+            }
+            ... on Human {
+              rank
+            }
+            ... on Droid {
+              rank
+            }
+          }
+        }
+      `;
+      const result = await graphql(StarWarsSchema, query);
+      expect(result).to.deep.equal({
+        errors: [
+          {
+            message: 'Fields "rank" conflict because they return conflicting types HumanRank and DroidRank. ' +
+              'Use different aliases on the fields to fetch both if this was intentional.',
+            locations: [{ line: 8, column: 15 }, { line: 11, column: 15 }],
+            path: undefined,
+          },
+        ],
+      });
+    });
+
+    it('Correctly reports error on conflicting "rankObject" fields', async () => {
+      const query = `
+        query CharactersQuery {
+          characters {
+            ... on Character {
+              name
+            }
+            ... on Human {
+              rankObject { __typename name }
+            }
+            ... on Droid {
+              rankObject { __typename name }
+            }
+          }
+        }
+      `;
+      const result = await graphql(StarWarsSchema, query);
+      expect(result).to.deep.equal({
+        errors: [
+          {
+            message: 'Fields "rankObject" conflict because they return conflicting types HumanRankObject and DroidRankObject. ' +
+            'Use different aliases on the fields to fetch both if this was intentional.',
+            locations: [{ line: 8, column: 15 }, { line: 11, column: 15 }], // not sure about exact locations
+            path: undefined,
+          },
+        ],
+      });
+    });
   });
 });

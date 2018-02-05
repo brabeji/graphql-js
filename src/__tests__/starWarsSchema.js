@@ -15,6 +15,7 @@ import {
   GraphQLNonNull,
   GraphQLSchema,
   GraphQLString,
+  GraphQLUnionType,
 } from '../type';
 
 import { getFriends, getHero, getHuman, getDroid } from './starWarsData.js';
@@ -35,6 +36,16 @@ import { getFriends, getHero, getHuman, getDroid } from './starWarsData.js';
  * Star Wars example is:
  *
  * enum Episode { NEWHOPE, EMPIRE, JEDI }
+ * enum HumanRank { PRIVATE, CAPTAIN, MAJOR }
+ * enum DroidRank { BASIC, ADVANCED, SUPERIOR }
+ *
+ * type HumanRankObject {
+ *   name: String!
+ * }
+ *
+ * type DroidRankObject {
+ *   name: String!
+ * }
  *
  * interface Character {
  *   id: String!
@@ -49,6 +60,8 @@ import { getFriends, getHero, getHuman, getDroid } from './starWarsData.js';
  *   friends: [Character]
  *   appearsIn: [Episode]
  *   homePlanet: String
+ *   rank: HumanRank
+ *   rankObject: HumanRankObject
  * }
  *
  * type Droid implements Character {
@@ -57,12 +70,17 @@ import { getFriends, getHero, getHuman, getDroid } from './starWarsData.js';
  *   friends: [Character]
  *   appearsIn: [Episode]
  *   primaryFunction: String
+ *   rank: DroidRank
+ *   rankObject: DroidRankObject
  * }
+ *
+ * union CharacterUnion = Human | Droid
  *
  * type Query {
  *   hero(episode: Episode): Character
  *   human(id: String!): Human
  *   droid(id: String!): Droid
+ *   characters: [CharacterUnion]
  * }
  *
  * We begin by setting up our schema.
@@ -89,6 +107,50 @@ const episodeEnum = new GraphQLEnumType({
     JEDI: {
       value: 6,
       description: 'Released in 1983.',
+    },
+  },
+});
+
+/**
+ * Rank in human military
+ */
+const humanRankEnum = new GraphQLEnumType({
+  name: 'HumanRank',
+  description: '',
+  values: {
+    PRIVATE: {
+      value: 'PRIVATE',
+      description: '',
+    },
+    CAPTAIN: {
+      value: 'CAPTAIN',
+      description: '',
+    },
+    MAJOR: {
+      value: 'MAJOR',
+      description: '',
+    },
+  },
+});
+
+/**
+ * Rank in droid military
+ */
+const droidRankEnum = new GraphQLEnumType({
+  name: 'DroidRank',
+  description: '',
+  values: {
+    BASIC: {
+      value: 'BASIC',
+      description: '',
+    },
+    ADVANCED: {
+      value: 'ADVANCED',
+      description: '',
+    },
+    SUPERIOR: {
+      value: 'SUPERIOR',
+      description: '',
     },
   },
 });
@@ -142,6 +204,28 @@ const characterInterface = new GraphQLInterfaceType({
   },
 });
 
+const humanRankObjectType = new GraphQLObjectType({
+  name: 'HumanRankObject',
+  description: '',
+  fields: () => ({
+    name: {
+      type: GraphQLString,
+      description: '',
+    },
+  }),
+});
+
+const droidRankObjectType = new GraphQLObjectType({
+  name: 'DroidRankObject',
+  description: '',
+  fields: () => ({
+    name: {
+      type: GraphQLString,
+      description: '',
+    },
+  }),
+});
+
 /**
  * We define our human type, which implements the character interface.
  *
@@ -179,6 +263,16 @@ const humanType = new GraphQLObjectType({
     homePlanet: {
       type: GraphQLString,
       description: 'The home planet of the human, or null if unknown.',
+    },
+    rank: {
+      type: humanRankEnum,
+      description: '',
+      resolve: () => 'PRIVATE',
+    },
+    rankObject: {
+      type: humanRankObjectType,
+      description: '',
+      resolve: () => ({ name: 'FOO' }),
     },
     secretBackstory: {
       type: GraphQLString,
@@ -226,6 +320,16 @@ const droidType = new GraphQLObjectType({
       type: GraphQLList(episodeEnum),
       description: 'Which movies they appear in.',
     },
+    rank: {
+      type: droidRankEnum,
+      description: '',
+      resolve: () => 'BASIC',
+    },
+    rankObject: {
+      type: droidRankObjectType,
+      description: '',
+      resolve: () => ({ name: 'BAR' }),
+    },
     secretBackstory: {
       type: GraphQLString,
       description: 'Construction date and the name of the designer.',
@@ -239,6 +343,19 @@ const droidType = new GraphQLObjectType({
     },
   }),
   interfaces: [characterInterface],
+});
+
+const characterUnion = new GraphQLUnionType({
+  name: 'CharacterUnion',
+  types: [humanType, droidType],
+  resolveType: data => {
+    if (data.type === 'Human') {
+      return humanType;
+    }
+    if (data.type === 'Droid') {
+      return droidType;
+    }
+  },
 });
 
 /**
@@ -289,6 +406,10 @@ const queryType = new GraphQLObjectType({
         },
       },
       resolve: (root, { id }) => getDroid(id),
+    },
+    characters: {
+      type: new GraphQLList(characterUnion),
+      resolve: () => [getDroid('2000'), getHuman('1000')],
     },
   }),
 });
